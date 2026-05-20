@@ -70,7 +70,7 @@ class OllamaService:
             
             # Parse and validate the response
             data = json.loads(extracted_text)
-            print(f\"DEBUG Ollama: Parsed JSON: {data}\")
+            print(f'DEBUG Ollama: Parsed JSON: {data}')
             
             # Validate critical fields
             if not data.get("point_person") or data.get("point_person", "").lower() in ["unknown", "not found", ""]:

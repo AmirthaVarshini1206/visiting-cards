@@ -51,7 +51,7 @@ class GeminiService:
             extracted_text = extracted_text.strip()
             
             data = json.loads(extracted_text)
-            print(f\"DEBUG Gemini: Parsed JSON: {data}\")
+            print(f'DEBUG Gemini: Parsed JSON: {data}')
             
             # Validate critical fields
             if not data.get("point_person") or data.get("point_person", "").lower() in ["unknown", "not found", ""]:
