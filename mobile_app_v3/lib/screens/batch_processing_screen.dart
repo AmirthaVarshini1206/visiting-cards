@@ -43,6 +43,32 @@ class _BatchProcessingScreenState extends ConsumerState<BatchProcessingScreen> {
         final extractResult = await api.extractCard(xFile, config.selectedModel, isWeb: kIsWeb);
         final Map<String, dynamic> data = extractResult["data"];
 
+        // Validate critical fields
+        final pointPerson = data['point_person']?.toString().trim() ?? '';
+        final orgName = data['organization_name']?.toString().trim() ?? '';
+        
+        if (pointPerson.isEmpty || pointPerson.toLowerCase().contains('not found')) {
+          _results.add({
+            "status": "error",
+            "message": "Could not extract person name from card",
+            "file": xFile.name,
+            "color": Colors.red,
+            "icon": Icons.error
+          });
+          continue;
+        }
+        
+        if (orgName.isEmpty || orgName.toLowerCase().contains('not found')) {
+          _results.add({
+            "status": "error",
+            "message": "Could not extract organization name from card",
+            "file": xFile.name,
+            "color": Colors.red,
+            "icon": Icons.error
+          });
+          continue;
+        }
+
         // 1. Run local duplicate check
         final duplicate = await ref.read(localDbServiceProvider).checkDuplicate(data);
 

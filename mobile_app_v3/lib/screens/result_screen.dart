@@ -28,6 +28,39 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
     widget.extractedData.forEach((key, value) {
       _controllers[key] = TextEditingController(text: value?.toString() ?? "");
     });
+    _checkDataQuality();
+  }
+
+  void _checkDataQuality() {
+    // Warn user if critical fields are missing or contain placeholder values
+    final pointPerson = widget.extractedData['point_person']?.toString().toLowerCase() ?? '';
+    final orgName = widget.extractedData['organization_name']?.toString().toLowerCase() ?? '';
+    
+    if (pointPerson.isEmpty || pointPerson.contains('not found') || pointPerson.contains('unknown')) {
+      _showWarningDialog('Missing Name', 'Could not extract person name. Please fill it in manually.');
+    } else if (orgName.isEmpty || orgName.contains('not found') || orgName.contains('unknown')) {
+      _showWarningDialog('Missing Organization', 'Could not extract organization name. Please fill it in manually.');
+    }
+  }
+
+  void _showWarningDialog(String title, String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -46,6 +79,30 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       _controllers.forEach((key, controller) {
         finalData[key] = controller.text;
       });
+
+      // Validate critical fields before saving
+      final pointPerson = finalData['point_person']?.toString().trim() ?? '';
+      final orgName = finalData['organization_name']?.toString().trim() ?? '';
+      
+      if (pointPerson.isEmpty || pointPerson.toLowerCase().contains('not found')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error: Person name cannot be empty"), backgroundColor: Colors.red),
+          );
+        }
+        setState(() => _isSyncing = false);
+        return;
+      }
+      
+      if (orgName.isEmpty || orgName.toLowerCase().contains('not found')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error: Organization name cannot be empty"), backgroundColor: Colors.red),
+          );
+        }
+        setState(() => _isSyncing = false);
+        return;
+      }
 
       // 1. Local Duplicate Check with user confirmation
       final duplicate = await ref.read(localDbServiceProvider).checkDuplicate(finalData);
