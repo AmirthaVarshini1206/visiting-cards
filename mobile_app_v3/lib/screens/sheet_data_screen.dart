@@ -183,7 +183,11 @@ class _SheetDataScreenState extends ConsumerState<SheetDataScreen> {
       if (rawRow is! Map) continue;
       Map<String, dynamic> row = {};
       rawRow.forEach((key, value) {
-        row[key.toString().toUpperCase().trim()] = value;
+        final rawKey = key.toString().toUpperCase().trim();
+        row[rawKey] = value;
+        // Normalize snake_case keys (e.g., POINT_PERSON -> POINT PERSON)
+        final normalizedKey = rawKey.replaceAll('_', ' ');
+        row[normalizedKey] = value;
       });
       processedData.add(row);
     }

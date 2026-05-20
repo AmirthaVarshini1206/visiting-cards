@@ -39,8 +39,16 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
 
   void _checkDataQuality() {
     // Warn user if critical fields are missing or contain placeholder values
+    print("DEBUG: Checking data quality...");
+    print("DEBUG: All controllers: ${_controllers.keys.toList()}");
+    
     final pointPerson = widget.extractedData['point_person']?.toString().toLowerCase() ?? '';
     final orgName = widget.extractedData['organization_name']?.toString().toLowerCase() ?? '';
+    
+    print("DEBUG: point_person from widget.extractedData: '$pointPerson'");
+    print("DEBUG: organization_name from widget.extractedData: '$orgName'");
+    print("DEBUG: point_person controller value: '${_controllers['point_person']?.text ?? 'NOT FOUND'}'");
+    print("DEBUG: organization_name controller value: '${_controllers['organization_name']?.text ?? 'NOT FOUND'}'");
     
     if (pointPerson.isEmpty || pointPerson.contains('not found') || pointPerson.contains('unknown')) {
       _showWarningDialog('Missing Name', 'Could not extract person name. Please fill it in manually.');

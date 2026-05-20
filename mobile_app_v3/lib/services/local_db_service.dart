@@ -4,6 +4,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalDatabaseService {
   static const String _storageKey = 'saved_cards';
 
+  // Robust case- and format-insensitive key lookup helper
+  dynamic _getValue(Map<String, dynamic> data, String key) {
+    if (data.containsKey(key)) return data[key];
+    
+    final searchKey = key.replaceAll('_', '').replaceAll(' ', '').toLowerCase();
+    for (var entry in data.entries) {
+      final normalizedEntryKey = entry.key.toString().replaceAll('_', '').replaceAll(' ', '').toLowerCase();
+      if (normalizedEntryKey == searchKey) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
   // Fetch all saved cards
   Future<List<Map<String, dynamic>>> getCards() async {
     try {
@@ -40,16 +54,16 @@ class LocalDatabaseService {
       final newCard = {
         'sl_no': nextSlNo,
         'SL No': nextSlNo, // Keep both for safety with older V2 header mappings
-        'organization_type': (cardData['organization_type'] ?? '').toString().toUpperCase(),
-        'organization_name': cardData['organization_name'] ?? '',
-        'location': cardData['location'] ?? '',
-        'point_person': cardData['point_person'] ?? '',
-        'department': cardData['department'] ?? '',
-        'contact_number': cardData['contact_number'] ?? '',
-        'contact_email': cardData['contact_email'] ?? '',
-        'address': cardData['address'] ?? '',
-        'url': cardData['url'] ?? '',
-        'remark': cardData['remark'] ?? 'Local-Upload',
+        'organization_type': (_getValue(cardData, 'organization_type') ?? '').toString().toUpperCase(),
+        'organization_name': _getValue(cardData, 'organization_name') ?? '',
+        'location': _getValue(cardData, 'location') ?? '',
+        'point_person': _getValue(cardData, 'point_person') ?? '',
+        'department': _getValue(cardData, 'department') ?? '',
+        'contact_number': _getValue(cardData, 'contact_number') ?? '',
+        'contact_email': _getValue(cardData, 'contact_email') ?? '',
+        'address': _getValue(cardData, 'address') ?? '',
+        'url': _getValue(cardData, 'url') ?? '',
+        'remark': _getValue(cardData, 'remark') ?? 'Local-Upload',
         'timestamp': DateTime.now().toIso8601String(),
       };
 
@@ -85,9 +99,9 @@ class LocalDatabaseService {
     try {
       final cards = await getCards();
 
-      final String personName = (cardData['point_person'] ?? '').toString().trim().toLowerCase();
-      final String contactNumber = (cardData['contact_number'] ?? '').toString().trim();
-      final String contactEmail = (cardData['contact_email'] ?? '').toString().trim().toLowerCase();
+      final String personName = (_getValue(cardData, 'point_person') ?? '').toString().trim().toLowerCase();
+      final String contactNumber = (_getValue(cardData, 'contact_number') ?? '').toString().trim();
+      final String contactEmail = (_getValue(cardData, 'contact_email') ?? '').toString().trim().toLowerCase();
 
       if (personName.isEmpty && contactNumber.isEmpty && contactEmail.isEmpty) {
         return null;
