@@ -31,7 +31,7 @@ class GeminiService:
         """
 
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-pro')
             
             # Gemini expects data with mime type
             image_part = {

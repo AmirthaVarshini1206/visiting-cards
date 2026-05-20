@@ -56,6 +56,18 @@ class OllamaService:
         }
 
         try:
+            result = self._generate(payload)
+            
+            # Extract and clean the response text
+            extracted_text = result.get("response", "").strip()
+            if extracted_text.startswith("```json"):
+                extracted_text = extracted_text[7:]
+            if extracted_text.startswith("```"):
+                extracted_text = extracted_text[3:]
+            if extracted_text.endswith("```"):
+                extracted_text = extracted_text[:-3]
+            extracted_text = extracted_text.strip()
+            
             # Parse and validate the response
             data = json.loads(extracted_text)
             
