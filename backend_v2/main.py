@@ -77,6 +77,10 @@ async def extract_card(
             
         if error:
             raise HTTPException(status_code=500, detail=f"AI Extraction Error (All models failed): {error}")
+        
+        print(f"DEBUG: Extracted data: {data}")
+        print(f"DEBUG: point_person: {data.get('point_person')}")
+        print(f"DEBUG: organization_name: {data.get('organization_name')}")
             
         return {
             "success": True,

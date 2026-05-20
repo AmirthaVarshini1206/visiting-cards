@@ -25,8 +25,14 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Debug: Print what data we received
+    print("DEBUG: Extracted data keys: ${widget.extractedData.keys.toList()}");
+    print("DEBUG: Extracted data: $widget.extractedData");
+    
     widget.extractedData.forEach((key, value) {
       _controllers[key] = TextEditingController(text: value?.toString() ?? "");
+      print("DEBUG: Controller[$key] = '${value?.toString() ?? ""}''");
     });
     _checkDataQuality();
   }

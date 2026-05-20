@@ -69,13 +69,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       api.updateBaseUrl(config.serverHost, config.serverPort);
 
       final result = await api.extractCard(xFile, config.selectedModel, isWeb: kIsWeb);
+      print("DEBUG: API Response: $result");
+      print("DEBUG: Extracted Data: ${result[\"data\"]}");
       
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (c) => ResultScreen(
-              extractedData: result["data"],
+              extractedData: result["data"] ?? {},
               xFile: xFile,
             ),
           ),
