@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: visiting-card-extractor
+    env: python
+    rootDir: backend_v2
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: OLLAMA_BASE_URL
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: CREDENTIALS_FILE
+        value: "/etc/secrets/credentials.json"
+    secretFiles:
+      - name: credentials.json
+        content: "" # You will paste your actual credentials.json content here in the Render dashboard

@@ -1,0 +1,7 @@
+google-generativeai
+openpyxl
+Pillow
+python-dotenv
+gspread
+oauth2client
+requests
