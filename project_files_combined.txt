@@ -1,0 +1,1762 @@
+--- mobile_app_v3/lib/main.dart ---
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'screens/home_screen.dart';
+import 'providers/config_provider.dart';
+
+void main() {
+  runApp(const ProviderScope(child: MyApp()));
+}
+
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final config = ref.watch(configProvider);
+
+    return MaterialApp(
+      title: 'CardScan AI',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: config.isDark ? Brightness.dark : Brightness.light,
+        colorSchemeSeed: Colors.blueAccent,
+        textTheme: GoogleFonts.interTextTheme(
+          ThemeData(brightness: config.isDark ? Brightness.dark : Brightness.light).textTheme,
+        ),
+      ),
+      home: const HomeScreen(),
+    );
+  }
+}
+
+--- mobile_app_v3/lib/screens/home_screen.dart ---
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'scanner_screen.dart';
+import 'settings_screen.dart';
+import 'sheet_data_screen.dart';
+import '../providers/config_provider.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const _HomeView(),
+    const SheetDataScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home_rounded),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.contact_phone_outlined),
+            activeIcon: Icon(Icons.contact_phone_rounded),
+            label: "Saved Cards",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeView extends ConsumerWidget {
+  const _HomeView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Stack(
+      children: [
+        // Background Gradient
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1),
+              ],
+            ),
+          ),
+        ),
+        
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 40),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Welcome,",
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              "CardScan AI",
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (c) => const SettingsScreen()),
+                        ),
+                        icon: const Icon(Icons.settings_outlined),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.2),
+                  
+                  const SizedBox(height: 40),
+                  
+                  _buildMainActionCard(context),
+                  
+                  const SizedBox(height: 40),
+                  
+                  Text(
+                    "Quick Tips",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.lightbulb_outline, color: Colors.amber),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Text("Ensure good lighting and avoid glare when scanning cards for the best OCR accuracy."),
+                        )
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainActionCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (c) => const ScannerScreen()),
+      ),
+      child: Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -20,
+              bottom: -20,
+              child: Icon(
+                Icons.qr_code_scanner_rounded,
+                size: 180,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.add_a_photo_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Scan New Card",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    "Extract data into local storage",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ).animate().scale(delay: 200.ms, duration: 400.ms),
+    );
+  }
+}
+
+--- mobile_app_v3/lib/screens/scanner_screen.dart ---
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../providers/config_provider.dart';
+import 'result_screen.dart';
+import 'batch_processing_screen.dart';
+
+class ScannerScreen extends ConsumerStatefulWidget {
+  const ScannerScreen({super.key});
+
+  @override
+  ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
+}
+
+class _ScannerScreenState extends ConsumerState<ScannerScreen> {
+  final ImagePicker _picker = ImagePicker();
+  bool _isProcessing = false;
+
+  bool get _supportsCamera =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  Future<void> _pickImage(ImageSource source) async {
+    if (source == ImageSource.camera && !_supportsCamera) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Camera capture is not available on this platform.")),
+        );
+      }
+      return;
+    }
+
+    if (source == ImageSource.gallery) {
+      final List<XFile> images = await _picker.pickMultiImage(
+        imageQuality: 85,
+      );
+      if (images.isNotEmpty) {
+        if (images.length == 1) {
+          _processImage(images.first);
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (c) => BatchProcessingScreen(images: images),
+            ),
+          );
+        }
+      }
+    } else {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        _processImage(image);
+      }
+    }
+  }
+
+  Future<void> _processImage(XFile xFile) async {
+    setState(() => _isProcessing = true);
+
+    try {
+      final config = ref.read(configProvider);
+      final api = ref.read(apiServiceProvider);
+      api.updateBaseUrl(config.serverHost, config.serverPort);
+
+      final result = await api.extractCard(xFile, config.selectedModel, isWeb: kIsWeb);
+      print("DEBUG: API Response: $result");
+      print("DEBUG: Extracted Data: ${result['data']}");
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (c) => ResultScreen(
+              extractedData: result["data"] ?? {},
+              xFile: xFile,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Scan Card")),
+      body: Center(
+        child: _isProcessing
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   const CircularProgressIndicator(),
+                   const SizedBox(height: 24),
+                   const Text("Analyzing with Local AI...") .animate(onPlay: (controller) => controller.repeat())
+                       .fadeIn(duration: 500.ms)
+                       .then()
+                       .fadeOut(duration: 500.ms),
+                   const SizedBox(height: 8),
+                   Text(
+                     "Running ${ref.watch(configProvider).selectedModel} on PC",
+                     style: const TextStyle(color: Colors.grey, fontSize: 12),
+                   ),
+                ],
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_supportsCamera) ...[
+                    _buildOption(
+                      context,
+                      "Take a Photo",
+                      Icons.camera_alt_rounded,
+                      () => _pickImage(ImageSource.camera),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  _buildOption(
+                    context,
+                    "Choose from Gallery",
+                    Icons.photo_library_rounded,
+                    () => _pickImage(ImageSource.gallery),
+                  ),
+                ],
+              ).animate().fadeIn().slideY(begin: 0.1),
+      ),
+    );
+  }
+
+  Widget _buildOption(BuildContext context, String title, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.8,
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 24),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+--- mobile_app_v3/lib/screens/result_screen.dart ---
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../providers/data_provider.dart';
+import '../widgets/selected_image.dart';
+
+class ResultScreen extends ConsumerStatefulWidget {
+  final Map<String, dynamic> extractedData;
+  final XFile xFile;
+
+  const ResultScreen({
+    super.key,
+    required this.extractedData,
+    required this.xFile,
+  });
+
+  @override
+  ConsumerState<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends ConsumerState<ResultScreen> {
+  final Map<String, TextEditingController> _controllers = {};
+  bool _isSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Debug: Print what data we received
+    print("DEBUG: Extracted data keys: ${widget.extractedData.keys.toList()}");
+    print("DEBUG: Extracted data: ${widget.extractedData}");
+    
+    widget.extractedData.forEach((key, value) {
+      _controllers[key] = TextEditingController(text: value?.toString() ?? "");
+      print("DEBUG: Controller[$key] = '${value?.toString() ?? ""}''");
+    });
+    _checkDataQuality();
+  }
+
+  void _checkDataQuality() {
+    // Warn user if critical fields are missing or contain placeholder values
+    print("DEBUG: Checking data quality...");
+    print("DEBUG: All controllers: ${_controllers.keys.toList()}");
+    
+    final pointPerson = widget.extractedData['point_person']?.toString().toLowerCase() ?? '';
+    final orgName = widget.extractedData['organization_name']?.toString().toLowerCase() ?? '';
+    
+    print("DEBUG: point_person from widget.extractedData: '$pointPerson'");
+    print("DEBUG: organization_name from widget.extractedData: '$orgName'");
+    print("DEBUG: point_person controller value: '${_controllers['point_person']?.text ?? 'NOT FOUND'}'");
+    print("DEBUG: organization_name controller value: '${_controllers['organization_name']?.text ?? 'NOT FOUND'}'");
+    
+    if (pointPerson.isEmpty || pointPerson.contains('not found') || pointPerson.contains('unknown')) {
+      _showWarningDialog('Missing Name', 'Could not extract person name. Please fill it in manually.');
+    } else if (orgName.isEmpty || orgName.contains('not found') || orgName.contains('unknown')) {
+      _showWarningDialog('Missing Organization', 'Could not extract organization name. Please fill it in manually.');
+    }
+  }
+
+  void _showWarningDialog(String title, String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    for (var c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _syncAndClean() async {
+    setState(() => _isSyncing = true);
+    try {
+      // Collect edited data
+      Map<String, dynamic> finalData = {};
+      _controllers.forEach((key, controller) {
+        finalData[key] = controller.text;
+      });
+
+      // Validate critical fields before saving
+      final pointPerson = finalData['point_person']?.toString().trim() ?? '';
+      final orgName = finalData['organization_name']?.toString().trim() ?? '';
+      
+      if (pointPerson.isEmpty || pointPerson.toLowerCase().contains('not found')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error: Person name cannot be empty"), backgroundColor: Colors.red),
+          );
+        }
+        setState(() => _isSyncing = false);
+        return;
+      }
+      
+      if (orgName.isEmpty || orgName.toLowerCase().contains('not found')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error: Organization name cannot be empty"), backgroundColor: Colors.red),
+          );
+        }
+        setState(() => _isSyncing = false);
+        return;
+      }
+
+      // 1. Local Duplicate Check with user confirmation
+      final duplicate = await ref.read(localDbServiceProvider).checkDuplicate(finalData);
+      if (duplicate != null && mounted) {
+        bool saveAnyway = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Duplicate Detected"),
+            content: Text("A card for '${duplicate['point_person']}' from '${duplicate['organization_name']}' already exists locally. Save anyway?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.orange),
+                child: const Text("Save Anyway"),
+              ),
+            ],
+          ),
+        ) ?? false;
+
+        if (!saveAnyway) {
+          setState(() => _isSyncing = false);
+          return;
+        }
+      }
+
+      // 2. Save locally
+      final slNo = await ref.read(localCardsProvider.notifier).addCard(finalData);
+
+      // 3. Delete local image as requested by user
+      await deleteSelectedImage(widget.xFile);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Successfully saved locally as #$slNo! Local photo deleted."),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Save Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Edit Results"),
+        actions: [
+          if (!_isSyncing)
+            TextButton.icon(
+              onPressed: _syncAndClean, 
+              icon: const Icon(Icons.save_rounded),
+              label: const Text("Save & Close"),
+            ),
+        ],
+      ),
+      body: _isSyncing 
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: buildSelectedImage(widget.xFile),
+                ),
+                const SizedBox(height: 24),
+                ..._controllers.entries.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: TextField(
+                      controller: entry.value,
+                      decoration: InputDecoration(
+                        labelText: entry.key.replaceAll("_", " ").toUpperCase(),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+    );
+  }
+}
+
+--- mobile_app_v3/lib/screens/settings_screen.dart ---
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/config_provider.dart';
+
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late TextEditingController _hostController;
+  late TextEditingController _portController;
+
+  @override
+  void initState() {
+    super.initState();
+    final config = ref.read(configProvider);
+    _hostController = TextEditingController(text: config.serverHost);
+    _portController = TextEditingController(text: config.serverPort.toString());
+  }
+
+  @override
+  void dispose() {
+    _hostController.dispose();
+    _portController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final config = ref.watch(configProvider);
+
+    if (_hostController.text != config.serverHost) {
+      _hostController.text = config.serverHost;
+    }
+    if (_portController.text != config.serverPort.toString()) {
+      _portController.text = config.serverPort.toString();
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Settings"),
+        actions: [
+          IconButton(
+            onPressed: () => ref.read(configProvider.notifier).toggleTheme(),
+            icon: Icon(config.isDark ? Icons.light_mode : Icons.dark_mode),
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          _buildSectionTitle("PC SERVER CONFIG"),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _hostController,
+            decoration: InputDecoration(
+              labelText: "Server Host",
+              hintText: "localhost, 10.0.2.2, or 192.168.1.5",
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              prefixIcon: const Icon(Icons.computer),
+            ),
+            onChanged: (val) => ref.read(configProvider.notifier).setHost(val),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _portController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: "Server Port",
+              hintText: "8000",
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              prefixIcon: const Icon(Icons.numbers),
+            ),
+            onChanged: (val) => ref.read(configProvider.notifier).setPort(val),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Update both values when you move the backend. Use localhost for desktop, 10.0.2.2 for Android emulator.",
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.2,
+        color: Colors.blueAccent,
+      ),
+    );
+  }
+}
+
+--- mobile_app_v3/lib/providers/config_provider.dart ---
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
+
+final apiServiceProvider = Provider((ref) => ApiService());
+
+class ConfigState {
+  final String serverHost;
+  final int serverPort;
+  final String selectedModel;
+  final bool isDark;
+
+  ConfigState({
+    required this.serverHost,
+    required this.serverPort,
+    required this.selectedModel,
+    this.isDark = true,
+  });
+
+  ConfigState copyWith({String? serverHost, int? serverPort, String? selectedModel, bool? isDark}) {
+    return ConfigState(
+      serverHost: serverHost ?? this.serverHost,
+      serverPort: serverPort ?? this.serverPort,
+      selectedModel: selectedModel ?? this.selectedModel,
+      isDark: isDark ?? this.isDark,
+    );
+  }
+}
+
+class ConfigNotifier extends StateNotifier<ConfigState> {
+  static String get _defaultHost {
+    if (kIsWeb) {
+      return "localhost";
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return "10.0.2.2";
+      case TargetPlatform.iOS:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+      case TargetPlatform.windows:
+        return "localhost";
+      case TargetPlatform.fuchsia:
+        return "localhost";
+    }
+  }
+
+  static int get _defaultPort => 8001;
+
+  ConfigNotifier() : super(ConfigState(serverHost: _defaultHost, serverPort: _defaultPort, selectedModel: "gemma4:31b-cloud")) {
+    _loadSync();
+  }
+
+  Future<void> _loadSync() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedHost = prefs.getString('serverHost') ?? prefs.getString('serverIp');
+    final savedPort = prefs.getInt('serverPort') ?? 8000;
+    final normalizedHost = (savedHost == null || savedHost.trim().isEmpty)
+        ? _defaultHost
+        : savedHost;
+    final normalizedPort = savedPort > 0 ? savedPort : _defaultPort;
+    final migratedPort = normalizedPort == 8000 ? _defaultPort : normalizedPort;
+
+    state = ConfigState(
+      serverHost: normalizedHost == "10.0.2.2" && defaultTargetPlatform != TargetPlatform.android
+          ? _defaultHost
+          : normalizedHost,
+      serverPort: migratedPort,
+      selectedModel: prefs.getString('selectedModel') ?? "gemma4:31b-cloud",
+      isDark: prefs.getBool('isDark') ?? true,
+    );
+
+    if (state.serverHost != normalizedHost) {
+      await prefs.setString('serverHost', state.serverHost);
+    }
+    await prefs.setInt('serverPort', state.serverPort);
+    await prefs.setString('serverIp', state.serverHost);
+  }
+
+  void setHost(String host) {
+    state = state.copyWith(serverHost: host);
+    _save();
+  }
+
+  void setPort(String portValue) {
+    final parsedPort = int.tryParse(portValue.trim());
+    if (parsedPort == null || parsedPort <= 0 || parsedPort > 65535) {
+      return;
+    }
+
+    state = state.copyWith(serverPort: parsedPort);
+    _save();
+  }
+
+  void toggleTheme() {
+    state = state.copyWith(isDark: !state.isDark);
+    _save();
+  }
+
+  Future<void> _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('serverHost', state.serverHost);
+    await prefs.setString('serverIp', state.serverHost);
+    await prefs.setInt('serverPort', state.serverPort);
+    await prefs.setBool('isDark', state.isDark);
+  }
+}
+
+final configProvider = StateNotifierProvider<ConfigNotifier, ConfigState>((ref) {
+  return ConfigNotifier();
+});
+
+--- mobile_app_v3/lib/services/api_service.dart ---
+import 'package:dio/dio.dart';
+
+class ApiService {
+  final Dio _dio = Dio();
+  String _baseUrl = "http://localhost:8000"; // Default
+
+  ApiService() {
+    _dio.options.headers = {
+      "ngrok-skip-browser-warning": "69420",
+    };
+  }
+
+  void updateBaseUrl(String host, int port) {
+    if (port == 443 || host.startsWith("https://")) {
+      String cleanHost = host.replaceFirst("https://", "");
+      _baseUrl = "https://$cleanHost";
+    } else {
+      _baseUrl = "http://$host:$port";
+    }
+    print("🌐 API Base URL updated to: $_baseUrl");
+  }
+
+  Future<Map<String, dynamic>> extractCard(dynamic imageFile, String model, {bool isWeb = false}) async {
+    try {
+      FormData formData;
+      if (isWeb) {
+        final bytes = await imageFile.readAsBytes();
+        formData = FormData.fromMap({
+          "file": MultipartFile.fromBytes(bytes, filename: imageFile.name),
+          "model": model,
+        });
+      } else {
+        String fileName = imageFile.path.split('/').last;
+        formData = FormData.fromMap({
+          "file": await MultipartFile.fromFile(imageFile.path, filename: fileName),
+          "model": model,
+        });
+      }
+
+      Response response = await _dio.post(
+        "$_baseUrl/extract",
+        data: formData,
+      );
+
+      return response.data;
+    } catch (e) {
+      throw Exception("Failed to extract card: $e");
+    }
+  }
+
+  Future<List<String>> getModels() async {
+    try {
+      Response response = await _dio.get("$_baseUrl/models");
+      return List<String>.from(response.data["models"]);
+    } catch (e) {
+      // Fallback
+      return ["llava", "moondream"];
+    }
+  }
+
+  Future<Map<String, dynamic>> syncToSheet(Map<String, dynamic> data) async {
+    try {
+      Response response = await _dio.post(
+        "$_baseUrl/sync",
+        data: data,
+      );
+      return response.data;
+    } catch (e) {
+      throw Exception("Failed to sync to sheet: $e");
+    }
+  }
+
+  Future<List<dynamic>> getSheetData() async {
+    try {
+      Response response = await _dio.get("$_baseUrl/data");
+      return response.data["data"] ?? [];
+    } catch (e) {
+      throw Exception("Failed to get sheet data: $e");
+    }
+  }
+}
+
+--- mobile_app_v3/lib/widgets/selected_image.dart ---
+export 'selected_image_web.dart'
+    if (dart.library.io) 'selected_image_io.dart';
+
+--- mobile_app_v3/lib/widgets/selected_image_io.dart ---
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+Widget buildSelectedImage(XFile file, {double height = 200, BoxFit fit = BoxFit.cover}) {
+  return Image.file(File(file.path), height: height, fit: fit);
+}
+
+Future<void> deleteSelectedImage(XFile file) async {
+  final imageFile = File(file.path);
+  if (await imageFile.exists()) {
+    await imageFile.delete();
+  }
+}
+
+--- mobile_app_v3/lib/widgets/selected_image_web.dart ---
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+Widget buildSelectedImage(XFile file, {double height = 200, BoxFit fit = BoxFit.cover}) {
+  return Image.network(file.path, height: height, fit: fit);
+}
+
+Future<void> deleteSelectedImage(XFile file) async {
+  return;
+}
+
+--- backend_v2/main.py ---
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+import os
+import traceback
+from dotenv import load_dotenv
+from services.ollama_service import OllamaService
+from services.gemini_service import GeminiService
+from services.sheet_service import SheetService
+import json
+
+load_dotenv()
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+app = FastAPI(title="Visiting Card Extractor API")
+
+# Enable CORS for Flutter communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize Services
+ollama = OllamaService()
+gemini = GeminiService()
+sheet_id = os.getenv("GOOGLE_SHEET_ID")
+
+# Smart detect Render credentials path
+cred_file = os.getenv("CREDENTIALS_FILE")
+if not cred_file:
+    if os.path.exists("/etc/secrets/credentials.json"):
+        cred_file = "/etc/secrets/credentials.json"
+    else:
+        cred_file = "credentials.json"
+
+sheets = SheetService(cred_file, sheet_id)
+backend_host = os.getenv("BACKEND_HOST", "0.0.0.0")
+backend_port = _env_int("PORT", _env_int("BACKEND_PORT", 8000))
+
+@app.get("/")
+async def root():
+    return {"status": "online", "message": "Visiting Card Extractor Backend is running"}
+
+@app.get("/models")
+async def get_models():
+    """Return only the cloud model for V2"""
+    return {"models": ["gemma4:31b-cloud"]}
+
+@app.post("/extract")
+async def extract_card(
+    file: UploadFile = File(...),
+    model: str = Form("gemma4:31b-cloud")
+):
+    """
+    1. Receive image from mobile app
+    2. Extract data via local Ollama model
+    3. If Ollama fails, fallback to Gemini API
+    4. Return extracted JSON to app
+    """
+    try:
+        contents = await file.read()
+        
+        print(f"Processing image with model: {model}...")
+        data, error = await ollama.extract_card_data(contents, model_name=model)
+        
+        if error:
+            print(f"Ollama Failed: {error}. Falling back to Gemini...")
+            data, error = await gemini.extract_card_data(contents)
+            
+        if error:
+            raise HTTPException(status_code=500, detail=f"AI Extraction Error (All models failed): {error}")
+        
+        print(f"DEBUG: Extracted data: {data}")
+        print(f"DEBUG: point_person: {data.get('point_person')}")
+        print(f"DEBUG: organization_name: {data.get('organization_name')}")
+            
+        return {
+            "success": True,
+            "data": data
+        }
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/sync")
+async def sync_to_sheet(data: dict):
+    """
+    Appends finalized/edited data to Google Sheet
+    """
+    try:
+        is_dup, dup_row = sheets.check_duplicate(data)
+        if is_dup:
+            return {
+                "success": False, 
+                "reason": "duplicate", 
+                "message": f"Duplicate found at row {dup_row}"
+            }
+            
+        sl_no = sheets.append_card(data)
+        return {"success": True, "sl_no": sl_no}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/data")
+async def get_sheet_data():
+    """
+    Fetches all uploaded cards from the Google Sheet
+    """
+    try:
+        data = sheets.get_all_data()
+        return {"success": True, "data": data}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    uvicorn.run(app, host=backend_host, port=backend_port)
+
+--- backend_v2/services/ollama_service.py ---
+import requests
+import base64
+import json
+import os
+
+class OllamaService:
+    def __init__(self, base_url=None):
+        self.base_url = base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        self.api_key = os.getenv("OLLAMA_API_KEY", "")
+
+    def _generate(self, payload):
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+            
+        response = requests.post(
+            f"{self.base_url}/api/generate",
+            json=payload,
+            headers=headers,
+            timeout=300
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def extract_card_data(self, image_bytes, model_name="gemma4:31b-cloud"):
+        """
+        Extract structured data from a visiting card image using a local or cloud Ollama model.
+        """
+        # Encode image to base64
+        image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+
+        prompt = """
+        You are a business card extraction expert. Carefully read the visiting card image and extract the following information into a structured JSON format.
+        
+        CRITICAL - Extract EXACTLY these fields:
+        1. organization_name: Full name of the company/organization (MUST extract - do not leave empty)
+        2. point_person: Full name of the person on the card (MUST extract the actual name - do not leave empty or use "Unknown")
+        3. department: Job title, designation, or department
+        4. location: City, State, or Country (extraction area only)
+        5. contact_number: Phone or mobile number
+        6. contact_email: Email address
+        7. organization_type: One of [university, business, consultancy, NGO, startup, government]
+        
+        IMPORTANT:
+        - If you cannot read a field clearly, use "Not Found" instead of leaving it empty or using "Unknown"
+        - For point_person: Extract the person's actual name from the card. If illegible, write "Not Found"
+        - Respond ONLY with valid JSON, no preamble or markdown
+        """
+
+        payload = {
+            "model": model_name,
+            "prompt": prompt,
+            "stream": False,
+            "images": [image_b64],
+            "format": "json"
+        }
+
+        try:
+            result = self._generate(payload)
+            
+            # Extract and clean the response text
+            extracted_text = result.get("response", "").strip()
+            if extracted_text.startswith("```json"):
+                extracted_text = extracted_text[7:]
+            if extracted_text.startswith("```"):
+                extracted_text = extracted_text[3:]
+            if extracted_text.endswith("```"):
+                extracted_text = extracted_text[:-3]
+            extracted_text = extracted_text.strip()
+            
+            # Parse and validate the response
+            data = json.loads(extracted_text)
+            print(f'DEBUG Ollama: Parsed JSON: {data}')
+            
+            # Validate critical fields
+            if not data.get("point_person") or data.get("point_person", "").lower() in ["unknown", "not found", ""]:
+                return None, "Could not extract person name from card. Please use a clearer image."
+            if not data.get("organization_name") or data.get("organization_name", "").lower() in ["unknown", "not found", ""]:
+                return None, "Could not extract organization name from card. Please use a clearer image."
+                
+            return data, None
+        except requests.HTTPError as e:
+            error_text = ""
+            try:
+                error_text = e.response.json().get("error", "")
+            except Exception:
+                error_text = str(e)
+
+
+            return None, error_text or str(e)
+        except Exception as e:
+            return None, str(e)
+
+--- backend_v2/services/sheet_service.py ---
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class SheetService:
+    def __init__(self, credentials_file, sheet_id):
+        self.credentials_file = credentials_file
+        self.sheet_id = sheet_id
+        self.scope = [
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        self.sheet = None
+
+    def _connect(self):
+        if not self.sheet:
+            try:
+                if os.path.isabs(self.credentials_file):
+                    cred_path = Path(self.credentials_file)
+                else:
+                    base_dir = Path(__file__).resolve().parent.parent.parent
+                    cred_path = base_dir / self.credentials_file
+
+                # Ultimate Fallback for Render Secret Files
+                if not cred_path.exists() and os.path.exists("/etc/secrets/credentials.json"):
+                    cred_path = Path("/etc/secrets/credentials.json")
+                
+                creds = ServiceAccountCredentials.from_json_keyfile_name(str(cred_path), self.scope)
+                client = gspread.authorize(creds)
+                self.sheet = client.open_by_key(self.sheet_id).sheet1
+            except Exception as e:
+                raise Exception(f"Failed to connect to Google Sheets: {str(e)}")
+
+    def get_next_sl_no(self):
+        self._connect()
+        try:
+            all_values = self.sheet.get_all_values()
+            if len(all_values) <= 1:
+                return 1
+            last_sl = all_values[-1][0]
+            try:
+                return int(last_sl) + 1
+            except:
+                return len(all_values)
+        except:
+            return 1
+
+    def check_duplicate(self, data):
+        """Check if entry already exists based on name, number, or email."""
+        self._connect()
+        person_name = data.get("point_person", "")
+        contact_number = data.get("contact_number", "")
+        contact_email = data.get("contact_email", "")
+
+        if not person_name and not contact_number and not contact_email:
+            return False, None
+
+        try:
+            all_values = self.sheet.get_all_values()
+            for row_idx, row in enumerate(all_values[1:], start=2):
+                if len(row) < 8:
+                    continue
+                
+                existing_person = row[4].strip().lower() if len(row) > 4 else ""
+                existing_number = row[6].strip().lower() if len(row) > 6 else ""
+                existing_email = row[7].strip().lower() if len(row) > 7 else ""
+
+                if person_name and existing_person:
+                    if person_name.strip().lower() == existing_person:
+                        return True, row_idx
+
+                if contact_number and existing_number:
+                    clean_new = "".join(filter(str.isdigit, str(contact_number)))
+                    clean_existing = "".join(filter(str.isdigit, str(existing_number)))
+                    if clean_new and clean_existing and clean_new == clean_existing:
+                        return True, row_idx
+
+                if contact_email and existing_email:
+                    if str(contact_email).strip().lower() == existing_email:
+                        return True, row_idx
+                        
+            return False, None
+        except Exception as e:
+            raise Exception(f"Failed to check duplicate: {str(e)}")
+
+    def append_card(self, data):
+        """
+        Appends extracted card data to the Google Sheet.
+        Expects data keys matching the Gemini output.
+        """
+        self._connect()
+        sl_no = self.get_next_sl_no()
+        
+        row = [
+            sl_no,
+            data.get("organization_type", "").upper(),
+            data.get("organization_name", ""),
+            data.get("location", ""),
+            data.get("point_person", ""),
+            data.get("department", ""),
+            data.get("contact_number", ""),
+            data.get("contact_email", ""),
+            "", # Address
+            "", # URL
+            "API-Upload" # Remark
+        ]
+        
+        try:
+            self.sheet.append_row(row)
+            return sl_no
+        except Exception as e:
+            raise Exception(f"Failed to append row: {str(e)}")
+
+    def get_all_data(self):
+        """
+        Fetches all records from the Google Sheet.
+        Returns a list of dictionaries where keys are column headers.
+        """
+        self._connect()
+        try:
+            records = self.sheet.get_all_records()
+            # Sort by SL No descending so newest is first
+            # The records might have 'SL No' as key or whatever is in the first column.
+            # We'll just reverse the list so the latest uploads show up first.
+            records.reverse()
+            return records
+        except Exception as e:
+            raise Exception(f"Failed to fetch data: {str(e)}")
+
+--- README.md ---
+# 🎴 Visiting Card Extractor - Version 2 (Cloud Edition)
+
+Welcome to **Version 2** of the Cloud-Optimized Visiting Card Extractor! This version completely decouples extraction from local hardware, migrating to a high-availability cloud backend hosted on **Render.com**. It supports **official Ollama Cloud APIs**, a highly robust **Google Gemini 1.5 Flash automated fallback**, a fully loaded **Sheet Data Viewer** with advanced search, sorting, and filters, and a powerful **multi-image Batch Processing pipeline**.
+
+---
+
+## 🌟 System Architecture
+
+```mermaid
+graph TD
+    A[Flutter App V2] -->|1. POST /extract| B(Render FastAPI Backend)
+    B -->|2a. Try| C[Ollama Cloud API]
+    B -->|2b. Fallback| D[Google Gemini API]
+    B -->|3. POST /sync| E[Google Sheets API]
+    A -->|4. GET /data| B
+```
+
+1. **Flutter Mobile App (V2)**: Captures or picks cards, triggers automated batch uploads, displays a live Google Sheet database, and manages custom hosts/ports.
+2. **FastAPI Backend (V2)**: Dynamically hosted on Render, handles cross-origin (CORS) mobile requests, and manages the AI orchestration and sheet synchronization.
+3. **Primary AI (Ollama Cloud)**: Connects to the official hosted Ollama servers using your unique API key.
+4. **Backup AI (Gemini 1.5 Flash)**: Acts as a silent enterprise fail-safe. If Ollama fails, rate limits, or expires, the backend automatically extracts your data using Gemini.
+5. **Database (Google Sheets)**: Houses all scanned contacts, automatically preventing duplicates and indexing entries.
+
+---
+
+## 🛠️ Backend Deployment (Render)
+
+The backend is configured to be 100% plug-and-play with Render using the custom `render.yaml` configuration.
+
+### 1. Set Up Secret Files
+Because you should never commit your Google Credentials to GitHub, Render manages them via **Secret Files**:
+* During deployment, create a Secret File named `credentials.json`.
+* Copy the contents of your local Google Service Account `credentials.json` and paste them into the box.
+* The backend will automatically detect this file in `/etc/secrets/credentials.json` and authenticate.
+
+### 2. Required Environment Variables
+Configure the following in the **Environment Variables** tab of your Render service:
+
+| Variable Name | Description | Example Value |
+| :--- | :--- | :--- |
+| `OLLAMA_BASE_URL` | The endpoint for your Ollama instance | `https://ollama.com` |
+| `OLLAMA_API_KEY` | Your official Ollama API Key | `ollama_sec_xxxx` |
+| `GEMINI_API_KEY` | Your Google Gemini API Key (Backup) | `AIzaSyA...` |
+| `GOOGLE_SHEET_ID` | The ID of your target Google Sheet | `1sOYLSNJ9EFkpX2mc...` |
+| `PYTHON_VERSION` | Forces Python compatibility | `3.10.0` |
+
+---
+
+## 📱 Mobile App Setup & Config
+
+Open the **`mobile_app_v2`** project in Flutter and launch it on your device/emulator.
+
+### 1. Connecting to the Cloud Backend
+1. Tap the **Settings (Gear)** icon at the top right of the Home screen.
+2. **Server Host**: Enter your Render Web Service URL **without the `https://` prefix** (e.g. `visiting-card-extractor.onrender.com`).
+3. **Server Port**: Change this to exactly **`443`** (Render routes secure traffic over port 443).
+4. Save the settings.
+
+---
+
+## 📖 Complete Usage Guide
+
+### 1. Manual Single Card Extraction
+* Tap **Scan New Card** on the Home screen.
+* Capture a card using your camera or choose **1 image** from the gallery.
+* The app will extract the data and show you the `ResultScreen`.
+* Review or edit any fields, then tap **Sync & Close**. If the card is already in your Google Sheet, the app will gracefully show an orange SnackBar warning you of the duplicate and prevent double-uploading!
+
+### 2. Multi-Select Batch Sync (Gallery)
+* Tap **Scan New Card** and select **Choose from Gallery**.
+* Long-press to select **multiple images** at once.
+* The app automatically launches the **Batch Processing Screen**:
+  * It will display a progress tracker showing exactly which card is being processed (e.g., `Processing 2 of 5`).
+  * It extracts data, checks duplicates, and syncs directly to the Google Sheet without requiring manual confirmation for every single card.
+  * Once finished, a complete **Summary List** displays exactly which cards were uploaded successfully (Green check) and which ones were skipped as duplicates or failed (Orange/Red warning).
+
+### 3. Sheet Data Viewer (Filters & Sorting)
+Tap the **Sheet Data** tab on your Bottom Navigation Bar to browse your live database:
+* **Search Bar**: Type any text to instantly filter cards by Point Person, Organization, Email, or Phone.
+* **Channel Filter**: Quick-filter your cards by Organization Type (e.g., *UNIVERSITY, BUSINESS, NGO*).
+* **Sorting Dropdown**: 
+  * **Newest First** (Default): Keeps your most recent uploads right at the top.
+  * **Oldest First**: Displays cards in ascending order.
+  * **A-Z (Person)**: Sorts alphabetically by name.
+  * **A-Z (Organization)**: Sorts alphabetically by company/university.
+* **Row Numbers**: Every card displays its exact Google Sheet Row Number (e.g. `#42`) in the top-right corner.
+* **Pull-to-Refresh**: Simply swipe down from the top to refresh and pull the latest records from the cloud.
+
+---
+
+## 🛑 Troubleshooting
+
+### App is hanging or timing out
+1. **Check the Port**: Ensure your **Server Port** in the mobile app settings is set to **`443`**. If it is set to `8000` or `8001`, the connection will hang because Render only exposes port 443 publicly.
+2. **Render Spin-Up Delay**: If the server has been inactive for 15 minutes, Render spins it down. The very first request you make will take **~50 seconds** to wake up the server. Subsequent requests will be instant!
+3. **Verify Render Logs**: Open your Render Web Service dashboard to check the logs. Our new traceback logger will print any internal sheet or AI errors immediately.
+
+---
+
+--- mobile_app_v3/pubspec.yaml ---
+name: mobile_app
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is a three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at
+# https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider using `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  dio: ^5.8.0+1
+  image_picker: ^1.1.2
+  google_fonts: ^6.2.1
+  flutter_riverpod: ^2.6.1
+  flutter_animate: ^4.5.2
+  lottie: ^3.1.3
+  shared_preferences: ^2.5.2
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^6.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+  
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # The following section is specific to Flutter packages.
+
+--- requirements.txt ---
+google-generativeai
+openpyxl
+Pillow
+python-dotenv
+gspread
+oauth2client
+requests
+
+--- backend_v2/requirements.txt ---
+fastapi
+uvicorn
+requests
+pillow
+python-multipart
+gspread
+oauth2client
+python-dotenv
+google-generativeai
+
+--- render.yaml ---
+services:
+  - type: web
+    name: visiting-card-extractor
+    env: python
+    rootDir: backend_v2
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: OLLAMA_BASE_URL
+        sync: false
+      - key: GOOGLE_SHEET_ID
+        sync: false
+      - key: CREDENTIALS_FILE
+        value: "/etc/secrets/credentials.json"
+    secretFiles:
+      - name: credentials.json
+        content: "" # You will paste your actual credentials.json content here in the Render dashboard
+
+--- errors.txt ---
+[2025-11-28 13:50:49] 1.jpg: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:50:53] 1.jpg: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:50:58] 2.jpg: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:51:02] 2.jpg: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:55:09] 1.jpg: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:55:13] 1.jpg: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:55:18] 2.jpg: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 13:55:22] 2.jpg: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2025-11-28 14:05:10] 1.jpg: [Errno 2] No such file or directory: 'visiting_cards\\1.jpg'
+[2025-11-28 14:05:26] 2.jpg: [Errno 2] No such file or directory: 'visiting_cards\\2.jpg'
+[2025-11-28 15:25:39] 1.jpg: [Errno 2] No such file or directory: 'visiting_cards\\1.jpg'
+[2025-11-28 15:25:54] 2.jpg: [Errno 2] No such file or directory: 'visiting_cards\\2.jpg'
+[2025-11-28 16:02:22] IMG-20251128-WA0043.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0043.jpg'
+[2025-11-28 16:02:37] IMG-20251128-WA0044.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0044.jpg'
+[2025-11-28 16:02:53] IMG-20251128-WA0045.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0045.jpg'
+[2025-11-28 16:03:10] IMG-20251128-WA0046.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0046.jpg'
+[2025-11-28 16:03:24] IMG-20251128-WA0047.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0047.jpg'
+[2025-11-28 16:03:39] IMG-20251128-WA0048.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0048.jpg'
+[2025-11-28 16:03:58] IMG-20251128-WA0049.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0049.jpg'
+[2025-11-28 16:04:15] IMG-20251128-WA0050.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0050.jpg'
+[2025-11-28 16:04:29] IMG-20251128-WA0051.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0051.jpg'
+[2025-11-28 16:04:45] IMG-20251128-WA0052.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0052.jpg'
+[2025-11-28 16:05:00] IMG-20251128-WA0053.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0053.jpg'
+[2025-11-28 16:05:18] IMG-20251128-WA0054.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251128-WA0054.jpg'
+[2025-11-28 16:05:33] IMG-20251210-WA0010.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0010.jpg'
+[2025-12-10 16:30:45] IMG-20251210-WA0011.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0011.jpg'
+[2025-12-10 16:33:45] IMG-20251210-WA0012.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0012.jpg'
+[2025-12-10 16:35:23] IMG-20251210-WA0013.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0013.jpg'
+[2025-12-10 16:37:05] IMG-20251210-WA0014.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0014.jpg'
+[2025-12-10 16:40:46] IMG-20251210-WA0015.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0015.jpg'
+[2025-12-10 16:41:15] IMG-20251210-WA0016.jpg: [Errno 2] No such file or directory: 'visiting_cards\\IMG-20251210-WA0016.jpg'
+[2025-12-11 12:19:55] IMG-20251211-WA0010.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 4.886868558s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 4
+}
+]
+[2025-12-11 12:19:56] IMG-20251211-WA0011.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 4.412456029s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 4
+}
+]
+[2025-12-11 12:19:56] IMG-20251211-WA0012.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 3.907637102s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 3
+}
+]
+[2025-12-11 12:19:57] IMG-20251211-WA0013.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 3.422499111s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 3
+}
+]
+[2025-12-11 12:19:57] IMG-20251211-WA0014.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 2.788239377s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 2
+}
+]
+[2025-12-11 12:19:58] IMG-20251211-WA0015.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 2.285321245s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 2
+}
+]
+[2025-12-11 12:20:24] IMG-20251211-WA0010.jpg: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/usage?tab=rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 36.068379708s. [links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-2.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 20
+}
+, retry_delay {
+  seconds: 36
+}
+]

@@ -122,5 +122,18 @@ async def get_sheet_data():
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/insights")
+async def get_insights():
+    """
+    Computes analytics/insights from the Google Sheet data.
+    Returns aggregated statistics for the Insights dashboard.
+    """
+    try:
+        insights = sheets.get_insights()
+        return {"success": True, "insights": insights}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run(app, host=backend_host, port=backend_port)

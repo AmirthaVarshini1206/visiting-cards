@@ -70,7 +70,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
       final result = await api.extractCard(xFile, config.selectedModel, isWeb: kIsWeb);
       print("DEBUG: API Response: $result");
-      print("DEBUG: Extracted Data: ${result[\"data\"]}");
+      print("DEBUG: Extracted Data: ${result['data']}");
       
       if (mounted) {
         Navigator.pushReplacement(

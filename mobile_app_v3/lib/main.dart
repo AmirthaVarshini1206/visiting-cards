@@ -16,7 +16,7 @@ class MyApp extends ConsumerWidget {
     final config = ref.watch(configProvider);
 
     return MaterialApp(
-      title: 'CardScan AI',
+      title: 'SNAPCARD',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

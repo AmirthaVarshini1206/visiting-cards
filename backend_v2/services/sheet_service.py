@@ -130,3 +130,78 @@ class SheetService:
             return records
         except Exception as e:
             raise Exception(f"Failed to fetch data: {str(e)}")
+
+    def get_insights(self):
+        """
+        Computes analytics/insights from the Google Sheet data.
+        Returns aggregated statistics for the Insights dashboard.
+        """
+        self._connect()
+        try:
+            records = self.sheet.get_all_records()
+            total = len(records)
+
+            by_org_type = {}
+            by_org_name = {}
+            by_department = {}
+            has_email = 0
+            has_phone = 0
+            has_both = 0
+
+            for r in records:
+                # Organization type breakdown
+                org_type = str(r.get("Organization Type", r.get("ORGANIZATION TYPE", r.get("Channel", "")))).strip().upper()
+                if org_type and org_type != "":
+                    by_org_type[org_type] = by_org_type.get(org_type, 0) + 1
+
+                # Organization name count
+                org_name = str(r.get("Organization Name", r.get("ORGANIZATION NAME", r.get("University", "")))).strip()
+                if org_name and org_name != "":
+                    by_org_name[org_name] = by_org_name.get(org_name, 0) + 1
+
+                # Department breakdown
+                dept = str(r.get("Department", r.get("DEPARTMENT", ""))).strip()
+                if dept and dept != "":
+                    by_department[dept] = by_department.get(dept, 0) + 1
+
+                # Contact completeness
+                email = str(r.get("Contact Email", r.get("CONTACT EMAIL", ""))).strip()
+                phone = str(r.get("Contact Number", r.get("CONTACT NUMBER", ""))).strip()
+                email_present = bool(email and email != "")
+                phone_present = bool(phone and phone != "")
+
+                if email_present:
+                    has_email += 1
+                if phone_present:
+                    has_phone += 1
+                if email_present and phone_present:
+                    has_both += 1
+
+            # Sort top organizations by count descending, take top 10
+            top_orgs = sorted(by_org_name.items(), key=lambda x: x[1], reverse=True)[:10]
+
+            return {
+                "total_cards": total,
+                "cards_by_org_type": by_org_type,
+                "top_organizations": [{"name": k, "count": v} for k, v in top_orgs],
+                "cards_by_department": by_department,
+                "contact_completeness": {
+                    "has_email": has_email,
+                    "has_phone": has_phone,
+                    "has_both": has_both,
+                    "total": total,
+                },
+            }
+        except Exception as e:
+            raise Exception(f"Failed to compute insights: {str(e)}")
+
+    def get_all_data_raw(self):
+        """
+        Fetches all records as raw rows (list of lists) for CSV export.
+        First row is headers.
+        """
+        self._connect()
+        try:
+            return self.sheet.get_all_values()
+        except Exception as e:
+            raise Exception(f"Failed to fetch raw data: {str(e)}")

@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'scanner_screen.dart';
 import 'settings_screen.dart';
 import 'sheet_data_screen.dart';
+import 'insights_screen.dart';
+import 'export_screen.dart';
 import '../providers/config_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -19,6 +21,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<Widget> _screens = [
     const _HomeView(),
     const SheetDataScreen(),
+    const InsightsScreen(),
+    const ExportScreen(),
   ];
 
   @override
@@ -47,6 +51,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.contact_phone_outlined),
             activeIcon: Icon(Icons.contact_phone_rounded),
             label: "Saved Cards",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights_outlined),
+            activeIcon: Icon(Icons.insights),
+            label: "Insights",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.file_download_outlined),
+            activeIcon: Icon(Icons.file_download),
+            label: "Export",
           ),
         ],
       ),
@@ -92,13 +106,13 @@ class _HomeView extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Welcome,",
+                              "Welcome to,",
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 color: Colors.grey,
                               ),
                             ),
                             Text(
-                              "CardScan AI",
+                              "SNAPCARD",
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.bold,

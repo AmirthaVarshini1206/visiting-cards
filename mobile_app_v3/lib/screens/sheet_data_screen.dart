@@ -101,6 +101,8 @@ class _SheetDataScreenState extends ConsumerState<SheetDataScreen> {
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           labelText: "Filter Channel",
                         ),
+                        isDense: true,
+                        isExpanded: true,
                         items: _channels.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 14)))).toList(),
                         onChanged: (val) {
                           setState(() {
@@ -118,6 +120,8 @@ class _SheetDataScreenState extends ConsumerState<SheetDataScreen> {
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                           labelText: "Sort By",
                         ),
+                        isDense: true,
+                        isExpanded: true,
                         items: _sortOptions.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 14)))).toList(),
                         onChanged: (val) {
                           setState(() {
@@ -327,7 +331,12 @@ class _SheetDataScreenState extends ConsumerState<SheetDataScreen> {
                     children: [
                       const Icon(Icons.phone, size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text(contact.toString()),
+                      Expanded(
+                        child: Text(
+                          contact.toString(),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
                 ],
