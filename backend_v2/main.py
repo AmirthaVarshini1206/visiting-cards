@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 import uvicorn
 import os
 import traceback
@@ -8,6 +9,8 @@ from services.ollama_service import OllamaService
 from services.gemini_service import GeminiService
 from services.sheet_service import SheetService
 import json
+import csv
+import io
 
 load_dotenv()
 
@@ -131,6 +134,32 @@ async def get_insights():
     try:
         insights = sheets.get_insights()
         return {"success": True, "insights": insights}
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/export/csv")
+async def export_csv():
+    """
+    Exports the Google Sheet data as a downloadable CSV file.
+    """
+    try:
+        raw_data = sheets.get_all_data_raw()
+        
+        # Create CSV in-memory
+        stream = io.StringIO()
+        writer = csv.writer(stream)
+        writer.writerows(raw_data)
+        
+        # Reset stream position to beginning
+        stream.seek(0)
+        
+        # Return as downloadable streaming response
+        return StreamingResponse(
+            iter([stream.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=snapcard_export.csv"}
+        )
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

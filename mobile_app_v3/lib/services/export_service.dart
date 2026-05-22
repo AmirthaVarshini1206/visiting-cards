@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
 import 'package:excel/excel.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -233,16 +232,16 @@ class ExportService {
 
       // Add headers
       sheet.appendRow([
-        'SL No',
-        'Organization Type',
-        'Organization Name',
-        'Location',
-        'Person',
-        'Department',
-        'Phone',
-        'Email',
-        'Address',
-        'Website'
+        TextCellValue('SL No'),
+        TextCellValue('Organization Type'),
+        TextCellValue('Organization Name'),
+        TextCellValue('Location'),
+        TextCellValue('Person'),
+        TextCellValue('Department'),
+        TextCellValue('Phone'),
+        TextCellValue('Email'),
+        TextCellValue('Address'),
+        TextCellValue('Website'),
       ]);
 
       // Style header row
@@ -251,31 +250,34 @@ class ExportService {
             .cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
         cell.cellStyle = CellStyle(
           bold: true,
-          backgroundColorHex: '#4472C4',
-          fontColorHex: '#FFFFFF',
+          backgroundColorHex: ExcelColor.fromHexString('#4472C4'),
+          fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
         );
       }
 
       // Add data rows
       for (int i = 0; i < filteredCards.length; i++) {
         final card = filteredCards[i];
+        final slNoVal = card['sl_no'] ?? card['SL No'] ?? '';
+        final parsedSl = int.tryParse(slNoVal.toString());
+
         sheet.appendRow([
-          card['sl_no'] ?? card['SL No'] ?? '',
-          card['organization_type']?.toString() ?? '',
-          card['organization_name']?.toString() ?? '',
-          card['location']?.toString() ?? '',
-          card['point_person']?.toString() ?? '',
-          card['department']?.toString() ?? '',
-          card['contact_number']?.toString() ?? '',
-          card['contact_email']?.toString() ?? '',
-          card['address']?.toString() ?? '',
-          card['url']?.toString() ?? '',
+          parsedSl != null ? IntCellValue(parsedSl) : TextCellValue(slNoVal.toString()),
+          TextCellValue(card['organization_type']?.toString() ?? ''),
+          TextCellValue(card['organization_name']?.toString() ?? ''),
+          TextCellValue(card['location']?.toString() ?? ''),
+          TextCellValue(card['point_person']?.toString() ?? ''),
+          TextCellValue(card['department']?.toString() ?? ''),
+          TextCellValue(card['contact_number']?.toString() ?? ''),
+          TextCellValue(card['contact_email']?.toString() ?? ''),
+          TextCellValue(card['address']?.toString() ?? ''),
+          TextCellValue(card['url']?.toString() ?? ''),
         ]);
       }
 
       // Auto-size columns
       for (int i = 0; i < 10; i++) {
-        sheet.setColumnWidth(i, 20);
+        sheet.setColumnWidth(i, 20.0);
       }
 
       // Save Excel file to device storage

@@ -6,7 +6,6 @@ import 'settings_screen.dart';
 import 'sheet_data_screen.dart';
 import 'insights_screen.dart';
 import 'export_screen.dart';
-import '../providers/config_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

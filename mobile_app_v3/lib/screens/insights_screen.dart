@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../services/local_db_service.dart';
 
 class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
@@ -714,10 +715,6 @@ class InsightsScreen extends ConsumerWidget {
 }
 
 // Create a provider for local cards used by insights
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/local_db_service.dart';
-import '../providers/data_provider.dart';
-
 final localCardsProviderForInsights = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final db = LocalDatabaseService();
   return await db.getCards();
